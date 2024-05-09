@@ -8,6 +8,8 @@ from openai import OpenAI
 
 
 def relay_message(message: str | None, tone: str | None) -> (str):
+  #Uses input of message and tone to output the modified
+  #new message with a modified new tone
   load_dotenv('.env')
   key = os.getenv('API_KEY')
   # ast = os.getenv('AST_KEY')
@@ -25,6 +27,8 @@ def relay_message(message: str | None, tone: str | None) -> (str):
   return completion.choices[0].message.content
 
 def check_if_tone(tone_test):
+  #Checks if the second argument passed into the command line
+  #is actually a word or phrase that describes a tone
   load_dotenv('.env')
   key = os.getenv('API_KEY')
   client = OpenAI(api_key=key)
