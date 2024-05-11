@@ -1,0 +1,11 @@
+body {
+    /* Define any attribute that I want shared across page*/
+    font-family:Arial, Helvetica, sans-serif;
+    text-align: center;
+}
+
+input[type="text"] {
+    width:60%;
+    padding: 12px;
+    font-size: medium;
+}

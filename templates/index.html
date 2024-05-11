@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <!-- Head: containing links and importing libraries-->
+    <head>
+        <!-- Link to our CSS code-->
+        <link rel="stylesheet" href="static/styles.css">
+        <!-- Title for our Website-->
+        <title>Tone Bot, with OpenAI API</title>
+    </head>
+    <!-- Body: containing all visual elements-->
+    <body>
+        <!-- Title & Description-->
+        <h1>ToneBot</h1>
+        <h3> Input a phrase and a tone to change the tone of the sentence</h3>
+
+        <!-- Form for the user to input prompts or questions into!-->
+        <form action="/" method="POST">
+            <input name="prompt" type="text" placeholder="Enter Your Sentence Here">
+            <input name="tone" type="text" placeholder="Enter Your Tone Here">
+            <br>
+            <button type="submit">Enter</button>
+        </form>
+
+        <!-- A location for response to come out-->
+        <div class="output">
+            <p class="text-center">{{ output }}</p>
+        </div>
+    </body>
+</html>

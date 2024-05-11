@@ -1,0 +1,176 @@
+
+from dotenv import load_dotenv
+import sys
+import argparse
+import os
+from openai import OpenAI
+from flask import Flask, render_template, redirect, request
+
+
+#Load our API_KEY
+load_dotenv('.env')
+key = os.getenv('API_KEY')
+# ast = os.getenv('AST_KEY')
+client = OpenAI(api_key=key)
+
+#Flask code help from Youtube Kamryn Ohly
+#configure our flask app
+app = Flask(__name__)
+
+#enable auto-reload
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+  if request.method == "POST":
+    #handle POST request
+    prompt = request.form.get("prompt")
+    tone = request.form.get("tone")
+    if not prompt:
+      message = "You did not enter a sentence"
+      return render_template("index.html", output=message)
+    if not tone or (check_if_tone(tone) == False):
+      message = "You did not enter a tone"
+      return render_template("index.html", output=message)
+    message = relay_message(prompt, tone)
+    return render_template("index.html", output=message)
+  else:
+    #GET Method
+    return render_template("index.html")
+  
+
+def check_if_tone(tone_test):
+  #Checks if the second argument passed into the command line
+  #is actually a word or phrase that describes a tone
+  load_dotenv('.env')
+  key = os.getenv('API_KEY')
+  client = OpenAI(api_key=key)
+  completion = client.chat.completions.create(
+  model="gpt-3.5-turbo",
+  messages=[
+    {"role": "system", "content": ("You are an editor who is in charge of" + 
+                                   "deciding if a bunch of input words or a word" + 
+                                   "describe a type of tone." + "A few examples of" +
+                                   "tones in english would be a happy, casual, sad, formal."
+                                   + "A few examples of not being a tone are sentences,"
+                                   + "what's up my guy, paragraphs, what's up my guy."
+                                   "If the words describe a tone, just respond with: yes. If it's not a tone, respond with: no")},
+    {"role": "user", "content": tone_test}
+  ]
+)
+  tone_return = completion.choices[0].message.content
+  print(tone_return)
+  if (tone_return == "Yes") or (tone_return == "yes"):
+    return True
+  else:
+    return False
+
+
+def relay_message(message: str | None, tone: str | None) -> (str):
+  #Uses input of message and tone to output the modified
+  #new message with a modified new tone
+  load_dotenv('.env')
+  key = os.getenv('API_KEY')
+  # ast = os.getenv('AST_KEY')
+  client = OpenAI(api_key=key)
+  completion = client.chat.completions.create(
+  model="gpt-3.5-turbo",
+  messages=[
+    {"role": "system", "content": "You are an editor who is in charge of" +
+                                   "changing the tones of phrases to the" +
+                                   "specified new tone." + "You should return"
+                                   + "a JSON output containing parameters"
+                                   + "phrase, tone, modifiedPhrase,"
+                                   + "and numOfTokens." + "phrase should"
+                                   + "have the input phrase, tone should have the"
+                                   + "requested tone, modifiedPhrase should have"
+                                   + "the new modified phrase, and numOfTokens" +
+                                   "should have the numbers of tokens used in request"},
+    {"role": "user", "content": ("Tone:" + tone + ". " "Phrases to"
+                                 "change:" + message)}
+  ]
+)
+  return completion.choices[0].message.content
+
+
+
+
+# def relay_message(message: str | None, tone: str | None) -> (str):
+#   #Uses input of message and tone to output the modified
+#   #new message with a modified new tone
+#   load_dotenv('.env')
+#   key = os.getenv('API_KEY')
+#   # ast = os.getenv('AST_KEY')
+#   client = OpenAI(api_key=key)
+#   completion = client.chat.completions.create(
+#   model="gpt-3.5-turbo",
+#   messages=[
+#     {"role": "system", "content": "You are an editor who is in charge of" +
+#                                    "changing the tones of phrases to the" +
+#                                    "specified new tone." + "If the tone" +
+#                                    "is not a valid tone, you should return:"+
+#                                    "'You did not enter a valid tone'."},
+#     {"role": "user", "content": ("Tone:" + tone + ". " "Phrases to"
+#                                  "change:" + message)}
+#   ]
+# )
+#   return completion.choices[0].message.content
+
+# def check_if_tone(tone_test):
+#   #Checks if the second argument passed into the command line
+#   #is actually a word or phrase that describes a tone
+#   load_dotenv('.env')
+#   key = os.getenv('API_KEY')
+#   client = OpenAI(api_key=key)
+#   completion = client.chat.completions.create(
+#   model="gpt-3.5-turbo",
+#   messages=[
+#     {"role": "system", "content": ("You are an editor who is in charge of" + 
+#                                    "deciding if a bunch of input words or a word" + 
+#                                    "describe a type of tone." + "A few examples of" +
+#                                    "tones would be a happy, casual, sad, formal."
+#                                    "If the words describe a tone, just respond with: yes")},
+#     {"role": "user", "content": tone_test}
+#   ]
+# )
+#   tone_return = completion.choices[0].message.content
+#   print(tone_return)
+#   if tone_return == "Yes":
+#     return True
+#   else:
+#     return False
+  
+
+# def main():
+#   if len(sys.argv) != 3:
+#     print("Not Enough arguments or too many arguments")
+#     return
+#   parser = argparse.ArgumentParser(description='Tone Editor')
+#   parser.add_argument('message', type=str, help='Sentence')
+#   parser.add_argument('tone', type=str,help='Tone')
+#   args = parser.parse_args()
+#   tone_check = check_if_tone(args.tone)
+#   print(tone_check)
+#   if tone_check: #if second argument is a tone
+#     message_sending = args.message
+#     tone_sending = args.tone
+#   else:
+#     print("Your second argument is not a tone")
+#     return
+#   response = relay_message(message_sending, tone_sending)
+#   print(response)        
+
+
+# if __name__ == '__main__':
+#   main()
+
+
+# completion = client.chat.completions.create(
+#   model="gpt-3.5-turbo",
+#   messages=[
+#     {"role": "system", "content": "You are an editor who is in charge of changing the tones of phrases to the specified new tone."},
+#     {"role": "user", "content": "Change the paragraph to a happy tone. The paragraph is as follows: In the dim light of the fading evening, an old man sat silently on the worn park bench, his eyes tracing the path of a solitary leaf drifting to the ground. Each wrinkle on his face seemed to tell a story of a cherished memory now lost to time. As the chill of the night set in, he pulled his coat tighter, the empty space beside him feeling colder than the autumn air."}
+#   ]
+# )
+
+# print(completion.choices[0].message.content)

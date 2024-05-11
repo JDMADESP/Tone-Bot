@@ -1,0 +1,12 @@
+Old Prompt for just inputting phrase:
+
+{"role": "system", "content": "You are an editor who is in charge of" +
+                                   "changing the tones of phrases to the" +
+                                   "specified new tone." + "Just return the modified" 
+                                   + "new sentence and nothing else. I do not wanna see"
+                                   + "what tone was used nor the old sentence. Just return"
+                                   + "the fixed new sentence."},
+    {"role": "user", "content": ("The tone is" + tone + ". " "Phrases to"
+                                 "change:" + message)}
+
+New Prompt for inputting JSON:
