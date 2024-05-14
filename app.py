@@ -28,9 +28,10 @@ def index():
       data = request.get_json()
       if not data:
         return jsonify({"error":"Incorrect Data"})
-      prompt = data["prompt"]
+      phrases = data["phrases"]
       tone = data["tone"]
       language = data["languages"]
+      outPhrases, costs = handle_Synch(phrases, tone, language)
     else: ##Get form terms
       prompt = request.form.get("prompt")
       tone = request.form.get("tone")
@@ -49,21 +50,15 @@ def index():
     return jsonify({"phrase": prompt, "tone": tone, "modifiedPhrase": message, "tokensUsed":tokens_used})
   else:
     return render_template("index.html", languages = languages)
-  # if request.method == "POST":
-  #   #handle POST request
-  #   prompt = request.form.get("prompt")
-  #   tone = request.form.get("tone")
-  #   if not prompt:
-  #     message = "You did not enter a sentence"
-  #     return render_template("index.html", output=message)
-  #   if not tone or (check_if_tone(tone) == False):
-  #     message = "You did not enter a tone"
-  #     return render_template("index.html", output=message)
-  #   message = relay_message(prompt, tone)
-  #   return render_template("index.html", output=message)
-  # else:
-  #   #GET Method
-  #   return render_template("index.html")
+
+def handle_Synch(phrases, tone, language):
+  if not prompt:
+      return jsonify({"error":"Error with prompt provided"})
+  if not language:
+    return jsonify({"error":"Error with language provided"})
+  if not tone or (check_if_tone(tone) == False):
+    return jsonify({"error":"Error with tone provided"})
+  
   
 
 def check_if_tone(tone_test):
