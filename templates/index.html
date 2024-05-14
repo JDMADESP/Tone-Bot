@@ -17,6 +17,11 @@
         <form action="/" method="POST">
             <input name="prompt" type="text" placeholder="Enter Your Sentence Here">
             <input name="tone" type="text" placeholder="Enter Your Tone Here">
+            <select id = "languages" name="languages">
+                {% for lg in languages %}
+                <option value="{{ lg }}">{{ lg }}</option>
+                {% endfor %}
+            </select>
             <br>
             <button type="submit">Enter</button>
         </form>

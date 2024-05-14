@@ -1,21 +1,22 @@
 
 from dotenv import load_dotenv
-import sys
-import argparse
 import os
 from openai import OpenAI
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, request, jsonify, make_response
+# import sys
+# import argparse
 
 
 #Load our API_KEY
 load_dotenv('.env')
 key = os.getenv('API_KEY')
-# ast = os.getenv('AST_KEY')
 client = OpenAI(api_key=key)
+languages = ["English", "Spanish"]
 
 #Flask code help from Youtube Kamryn Ohly
 #configure our flask app
 app = Flask(__name__)
+app.json.sort_keys = False
 
 #enable auto-reload
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -23,28 +24,51 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 @app.route("/", methods=["GET", "POST"])
 def index():
   if request.method == "POST":
-    #handle POST request
-    prompt = request.form.get("prompt")
-    tone = request.form.get("tone")
+    if request.is_json: ##Get JSON Terms
+      data = request.get_json()
+      if not data:
+        return jsonify({"error":"Incorrect Data"})
+      prompt = data["prompt"]
+      tone = data["tone"]
+      language = data["languages"]
+    else: ##Get form terms
+      prompt = request.form.get("prompt")
+      tone = request.form.get("tone")
+      language = request.form.get("languages")
+    print(language)
+    ##Check if inputted valid
     if not prompt:
-      message = "You did not enter a sentence"
-      return render_template("index.html", output=message)
+      return jsonify({"error":"Error with prompt provided"})
+    if not language:
+      return jsonify({"error":"Error with language provided"})
     if not tone or (check_if_tone(tone) == False):
-      message = "You did not enter a tone"
-      return render_template("index.html", output=message)
-    message = relay_message(prompt, tone)
-    return render_template("index.html", output=message)
+      return jsonify({"error":"Error with tone provided"})
+    #######
+    ###Get new message and tokens used
+    message, tokens_used = relay_message(prompt, tone, language)
+    return jsonify({"phrase": prompt, "tone": tone, "modifiedPhrase": message, "tokensUsed":tokens_used})
   else:
-    #GET Method
-    return render_template("index.html")
+    return render_template("index.html", languages = languages)
+  # if request.method == "POST":
+  #   #handle POST request
+  #   prompt = request.form.get("prompt")
+  #   tone = request.form.get("tone")
+  #   if not prompt:
+  #     message = "You did not enter a sentence"
+  #     return render_template("index.html", output=message)
+  #   if not tone or (check_if_tone(tone) == False):
+  #     message = "You did not enter a tone"
+  #     return render_template("index.html", output=message)
+  #   message = relay_message(prompt, tone)
+  #   return render_template("index.html", output=message)
+  # else:
+  #   #GET Method
+  #   return render_template("index.html")
   
 
 def check_if_tone(tone_test):
   #Checks if the second argument passed into the command line
   #is actually a word or phrase that describes a tone
-  load_dotenv('.env')
-  key = os.getenv('API_KEY')
-  client = OpenAI(api_key=key)
   completion = client.chat.completions.create(
   model="gpt-3.5-turbo",
   messages=[
@@ -60,38 +84,41 @@ def check_if_tone(tone_test):
 )
   tone_return = completion.choices[0].message.content
   print(tone_return)
+  # print(tone_return)
   if (tone_return == "Yes") or (tone_return == "yes"):
     return True
   else:
     return False
 
 
-def relay_message(message: str | None, tone: str | None) -> (str):
+def relay_message(message: str | None, tone: str | None, lang: str | None) -> (str):
   #Uses input of message and tone to output the modified
   #new message with a modified new tone
-  load_dotenv('.env')
-  key = os.getenv('API_KEY')
-  # ast = os.getenv('AST_KEY')
-  client = OpenAI(api_key=key)
-  completion = client.chat.completions.create(
-  model="gpt-3.5-turbo",
-  messages=[
-    {"role": "system", "content": "You are an editor who is in charge of" +
-                                   "changing the tones of phrases to the" +
-                                   "specified new tone." + "You should return"
-                                   + "a JSON output containing parameters"
-                                   + "phrase, tone, modifiedPhrase,"
-                                   + "and numOfTokens." + "phrase should"
-                                   + "have the input phrase, tone should have the"
-                                   + "requested tone, modifiedPhrase should have"
-                                   + "the new modified phrase, and numOfTokens" +
-                                   "should have the numbers of tokens used in request"},
-    {"role": "user", "content": ("Tone:" + tone + ". " "Phrases to"
-                                 "change:" + message)}
-  ]
-)
-  return completion.choices[0].message.content
-
+  if lang == "English":
+    completion = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[
+      {"role": "system", "content": """You are in charge of changing the tone
+                                      of a sentence. Only output the new sentence in english"""},
+      {"role": "user", "content": ("Tone:" + tone + ". " "Phrases to"
+                                  "change:" + message)}
+    ]
+  )
+  else:
+    completion = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[
+      {"role": "system", "content": """Tu eres el encargado de cambiar el tono
+                                      de una frase. Solo genera 
+                                      la nueva oración en español"""},
+      {"role": "user", "content": ("Tono:" + tone + ". " "Frase a cambiar:" 
+                                   + message)}
+    ]
+    )
+  ret_message = completion.choices[0].message.content
+  num_tokens = completion.usage.total_tokens
+  print(ret_message)
+  return ret_message, num_tokens
 
 
 
